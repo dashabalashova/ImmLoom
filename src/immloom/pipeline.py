@@ -98,6 +98,7 @@ def run_pipeline(input_path: Path,
     df11 = df10[(df10.x1!=df10.y1) | (df10.x2!=df10.y2)].reset_index(drop=True)
     df11.loc[:,'proj_id_x'] = df11.apply(lambda r: find_overlap(r, dsegm1, axis='x'), axis=1)
     df11.loc[:,'proj_id_y'] = df11.apply(lambda r: find_overlap(r, dsegm1, axis='y'), axis=1)
+    df11.to_csv('test', sep='\t')
     edges = (df11[['proj_id_x', 'proj_id_y']].values.tolist())
     edges = [tuple(edge) for edge in edges if ((edge[0] != edge[1]) & (edge[0] != -1) & (edge[1] != -1))]
     G = nx.Graph()

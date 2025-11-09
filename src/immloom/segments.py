@@ -31,6 +31,8 @@ def merge_segments(df: pd.DataFrame, dist_max: float = 0.0) -> pd.DataFrame:
     """
     merged = []
     merged_idx = []
+    df = df.reset_index(drop=True)
+    df['idx_0'] = df.index
     for strand in ['+', '-']:
         dfs = df[df.strand == strand].sort_values(['x1', 'y1']).reset_index(drop=True)
         G = nx.Graph()
@@ -56,7 +58,7 @@ def merge_segments(df: pd.DataFrame, dist_max: float = 0.0) -> pd.DataFrame:
                     'x1': int(x1), 'x2': int(x2),
                     'y1': int(y1), 'y2': int(y2),
                     'strand': strand})
-                merged_idx += list(segs.index)
+                merged_idx += list(segs['idx_0'])
     merged_df = pd.DataFrame(merged)
     not_merged_df = df.drop(index=merged_idx, errors='ignore')
     df1 = pd.concat([merged_df, not_merged_df], ignore_index=True).sort_values(['x1', 'y1', 'x2', 'y2'])
