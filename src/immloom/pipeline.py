@@ -31,11 +31,18 @@ import random
 def run_pipeline(input_path: Path, 
                  input_file: str, 
                  out_dir: Path, 
-                 pi_min = 80.0, 
-                 segm_length_min = 5000, 
-                 dist_max = 5000, 
-                 block_length_min = 5000, 
-                 inv_plot=False):
+                 #pi_min = 80.0, 
+                 #segm_length_min = 3000, 
+                 #dist_max = 3000, 
+                 #block_length_min = 3000, 
+                 #inv_plot=False
+                 pi_min: float, 
+                 segm_length_min: int, 
+                 dist_max: int, 
+                 block_length_min: int, 
+                 inv_plot: bool):
+
+    init_segm_length_min = segm_length_min
     
     repo_src = Path(__file__).resolve().parents[1]
     if str(repo_src) not in sys.path:
@@ -58,7 +65,7 @@ def run_pipeline(input_path: Path,
     df = segm_preprocess(input_path, input_file)
     print(f"{emoji}  Number of segments: {df.shape[0]}\n")
 
-    df_filtered = segm_filter(df, length=segm_length_min, pi=pi_min)
+    df_filtered = segm_filter(df, length=init_segm_length_min, pi=pi_min)
     print(f"{emoji}  Number of segments after filtering: {df_filtered.shape[0]}\n")
     df_symmetric = segm_symmetric(df_filtered)
     df_symmetric = df_symmetric[df_symmetric.x1 >= df_symmetric.y1]
