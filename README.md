@@ -8,6 +8,18 @@ cp tmp_repo/data_primate_igtrloci_fasta/*.fasta data/raw/dataset_01/fasta/
 rm -rf tmp_repo
 ```
 
+venv
+```
+brew install python@3.10
+python3.10 -m venv ~/.venvs/immloom
+source ~/.venvs/immloom/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+pip install uv
+uv pip install numpy pandas matplotlib ipykernel patchworkplot
+python -m ipykernel install --user --name immloom --display-name "immloom"
+brew install lastz
+```
+
 run patchworkplot
 ```
 python3 scripts/normalize_fasta_names.py
