@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "immloom"
+version = "0.0.0"
+description = "ImmLoom — compact pipeline package"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+  { name = "Daria Balashova" }
+]
+dependencies = [
+  "pandas",
+  "networkx",
+  "matplotlib",
+  "seaborn"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
