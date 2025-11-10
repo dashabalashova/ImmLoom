@@ -42,7 +42,7 @@ def run_pipeline(input_path: Path,
                  block_length_min: int, 
                  inv_plot: bool):
 
-    init_segm_length_min = segm_length_min
+    init_segm_length_min = 10000
     
     repo_src = Path(__file__).resolve().parents[1]
     if str(repo_src) not in sys.path:
