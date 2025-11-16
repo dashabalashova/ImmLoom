@@ -8,6 +8,7 @@ def main():
     p.add_argument("--input-path", required=True)
     p.add_argument("--input-file", required=True)
     p.add_argument("--out-dir", default="./immloom_out")
+    p.add_argument("--init-segm-length-min", default=10000)
     p.add_argument("--pi-min", default=80.0)
     p.add_argument("--segm-length-min", default=2000)
     p.add_argument("--dist-max", default=2000)
@@ -16,6 +17,7 @@ def main():
                    help="If set, produce inversion plot (default: false)")
     args = p.parse_args()
     run_pipeline(Path(args.input_path), args.input_file, Path(args.out_dir),
+                 init_segm_length_min=args.init_segm_length_min, 
                  pi_min=args.pi_min, 
                  segm_length_min=args.segm_length_min, 
                  dist_max=args.dist_max, 
