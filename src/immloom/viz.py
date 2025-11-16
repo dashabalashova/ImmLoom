@@ -39,6 +39,41 @@ def plot_segments(*dfs):
     plt.tight_layout()
     plt.show()
 
+def plot_segments_c(*dfs, seed=0):
+    """
+    Plot one or more segment DataFrames side-by-side. Color by strand.
+    For strand '+' each segment gets a random color; for strand '-' color is red.
+    Optional: seed for reproducible random colors.
+    """
+    if seed is not None:
+        random.seed(seed)
+
+    xs, ys = [], []
+    for df in dfs:
+        xs.extend(df.x1.tolist())
+        xs.extend(df.x2.tolist())
+        ys.extend(df.y1.tolist())
+        ys.extend(df.y2.tolist())
+    x_min, x_max = min(xs), max(xs)
+    y_min, y_max = min(ys), max(ys)
+    n = len(dfs)
+    fig, axes = plt.subplots(1, n, sharex=True, sharey=True, figsize=(16, 16/max(1,n)))
+    if n == 1:
+        axes = [axes]
+    for ax, df in zip(axes, dfs):
+        for _, row in df.iterrows():
+            if row['strand'] == '+':
+                # random RGB tuple, each component in [0,1)
+                color = tuple(random.random() for _ in range(3))
+            else:
+                color = 'red'
+            ax.plot([row['x1'], row['x2']], [row['y1'], row['y2']], linewidth=2, color=color)
+        ax.set_aspect('equal', 'box')
+        ax.set_xlim(x_min, x_max)
+        ax.set_ylim(y_max, y_min)
+    plt.tight_layout()
+    plt.show()
+
 def plot_necklace_diagonal(ax, df: pd.DataFrame, info_text: str = None, title: str = None, colors: Dict[Any, Any] = None,
                            scale: float = 1.37, aspect: float = 0.8, rotate_deg: float = 45,
                            palette_name: str = 'Spectral', draw_lines: bool = True,
