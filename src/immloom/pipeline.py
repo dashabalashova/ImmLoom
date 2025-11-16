@@ -95,7 +95,12 @@ def run_pipeline(input_path: Path,
     else:
         df9 = df_split
 
-    df10 = split_segments(df9, length_min=segm_length_min)
+    df9_nd = df9[(df9.x1!=df9.y1) | (df9.x2!=df9.y2)]
+    df9_d = df9[(df9.x1==df9.y1) & (df9.x2==df9.y2)]
+    df10_nd = split_segments(df9_nd, length_min=segm_length_min)
+    split_points = sorted(list(set(list(df10_nd.x1) + list(df10_nd.x2) + list(df10_nd.y1) + list(df10_nd.y2))))
+    df10_d = split_segments(df9_d, split_points=split_points, length_min=segm_length_min)
+    df10 = pd.concat([df10_nd, df10_d])
     dsegm1 = df10[(df10.x1==df10.y1) & (df10.x2==df10.y2)].reset_index(drop=True)
     dsegm1 = dsegm1[dsegm1.length>=block_length_min]
     dsegm1['dsegm_id'] = dsegm1.index
@@ -103,6 +108,7 @@ def run_pipeline(input_path: Path,
     dsegm1['d2'] = dsegm1['x2']
     dsegm1 = dsegm1.drop(columns=['x1', 'x2', 'y1', 'y2'])
     df11 = df10[(df10.x1!=df10.y1) | (df10.x2!=df10.y2)].reset_index(drop=True)
+
     df11.loc[:,'proj_id_x'] = df11.apply(lambda r: find_overlap(r, dsegm1, axis='x'), axis=1)
     df11.loc[:,'proj_id_y'] = df11.apply(lambda r: find_overlap(r, dsegm1, axis='y'), axis=1)
     df11.to_csv('test', sep='\t')
