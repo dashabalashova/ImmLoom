@@ -6,6 +6,7 @@ from math import sqrt
 from typing import List, Tuple, Dict, Set, Optional
 import pandas as pd
 import networkx as nx
+import matplotlib.pyplot as plt
 
 __all__ = [
     "segm_symmetric", "merge_segments", "split_segments",
@@ -113,6 +114,40 @@ def split_segments(df: pd.DataFrame, split_points: Optional[List[int]] = None,
                     xt = int(x1 + (x2 - x1) / (y2 - y1) * (yt - y1))
                     points.append((xt, yt+1))
                     points.append((xt+1, yt))
+        points = sorted(points, key=lambda p: p[0])
+        for (xa, ya), (xb, yb) in zip(points[:-1], points[1:]):
+            segm_lst.append({'x1': int(xa), 'y1': int(ya), 'x2': int(xb), 'y2': int(yb), 'strand': strand})
+    df1 = pd.DataFrame(segm_lst)
+    if df1.empty:
+        return df1
+    df1['length'] = df1.apply(lambda x: int(sqrt((x.x2 - x.x1)**2 + (x.y2 - x.y1)**2)), axis=1)
+    if length_min is not None:
+        df1 = df1[df1.length >= length_min]
+    return df1[['x1', 'x2', 'y1', 'y2', 'strand', 'length']].reset_index(drop=True)
+
+def split_segments_sdir(df: pd.DataFrame, split_points: Optional[List[int]] = None, 
+                   length_min: Optional[int] = None, sdir='vert') -> pd.DataFrame:
+    if split_points is None:
+        split_points = sorted(list(set(list(df.x1) + list(df.x2) + list(df.y1) + list(df.y2))))
+
+    segm_lst = []
+    for _, row in df.iterrows():
+        x1, y1, x2, y2, strand = row.x1, row.y1, row.x2, row.y2, row.strand
+        points = [(x1, y1), (x2, y2)]
+        if strand == '+':
+            if sdir=='vert':
+                for xt in split_points:
+                    if x1 < xt < x2:
+                        yt = int(y1 + (y2 - y1) / (x2 - x1) * (xt - x1))
+                        points.append((xt, yt))
+                        points.append((xt+1, yt+1))
+            else:
+                for yt in split_points:
+                    if y1 < yt < y2:
+                        xt = int(x1 + (x2 - x1) / (y2 - y1) * (yt - y1))
+                        points.append((xt, yt))
+                        points.append((xt+1, yt+1))
+
         points = sorted(points, key=lambda p: p[0])
         for (xa, ya), (xb, yb) in zip(points[:-1], points[1:]):
             segm_lst.append({'x1': int(xa), 'y1': int(ya), 'x2': int(xb), 'y2': int(yb), 'strand': strand})
@@ -332,3 +367,41 @@ def reflect_segments(df: pd.DataFrame, df7: pd.DataFrame,
     df_reflected_xy['strand'] = '+'
     df_reflected_xy[['x1', 'x2', 'y1', 'y2']] = df_reflected_xy[['x1', 'x2', 'y1', 'y2']].astype(int)
     return df_reflected_xy
+
+def create_and_plot_graph(dfx, dfy, df4, n1='n1', n2='n2', figsize=(8,6), plot=False):
+    if 'block_id_x' not in df4.columns:
+        df4['block_id_x'] = df4.apply(lambda r: find_block_id(r, dfx, 'x'), axis=1)
+    if 'block_id_y' not in df4.columns:
+        df4['block_id_y'] = df4.apply(lambda r: find_block_id(r, dfy, 'y'), axis=1)
+    def prefixed_bid(prefix, bid):
+        return f"{prefix}_{int(bid)}" if pd.notna(bid) else None
+    edges = []
+    for _, r in df4.iterrows():
+        bx = prefixed_bid(n1, r.get('block_id_x'))
+        by = prefixed_bid(n2, r.get('block_id_y'))
+        if bx is not None and by is not None:
+            edges.append((bx, by))
+    G = nx.Graph()
+    G.add_edges_from(edges)
+    if plot:
+        plt.figure(figsize=figsize)
+        if len(G) == 0:
+            plt.text(0.5, 0.5, "Graph is empty (no edges between prefixed block ids)", ha='center', va='center')
+            plt.axis('off')
+        else:
+            left_nodes = [n for n in G.nodes if str(n).startswith(f"{n1}_")]
+            right_nodes = [n for n in G.nodes if str(n).startswith(f"{n2}_")]
+            if left_nodes and right_nodes:
+                pos = {}
+                for i, node in enumerate(left_nodes):
+                    pos[node] = (-1, (i - len(left_nodes)/2))
+                for i, node in enumerate(right_nodes):
+                    pos[node] = (1, (i - len(right_nodes)/2))
+                combined = nx.spring_layout(G, pos=pos, fixed=list(pos.keys()), seed=3)
+                pos = combined
+            else:
+                pos = nx.spring_layout(G, seed=4)
+            nx.draw(G, pos, with_labels=True, node_size=700, font_size=9)
+        plt.title(f"Edges between {n1}_block_id and {n2}_block_id (from df4)")
+        plt.show()
+    return G

@@ -9,6 +9,7 @@ from matplotlib.patches import Polygon
 import matplotlib.patches as mpatches
 import seaborn as sns, random
 import pandas as pd
+from pathlib import Path
 
 __all__ = ["plot_segments", "plot_necklace_diagonal"]
 
@@ -116,3 +117,101 @@ def plot_necklace_diagonal(ax, df: pd.DataFrame, info_text: str = None, title: s
     ax.legend(handles=handles, title='block_id', bbox_to_anchor=(1.02, 1), loc='upper left')
     ax.set_aspect('equal', 'box')
     return colors
+
+def plot_segments_color(df: pd.DataFrame, *,
+                        save_path: Path | str | None = None,
+                        show: bool = False,
+                        title: str | None = None,
+                        linewidth: float = 2.0,
+                        alpha: float = 0.9,
+                        figsize=(10, 8)):
+    """
+    Plot segments colored by membership flags 'in_x' and 'in_y'.
+
+    Color scheme:
+      - red    : neither in_x nor in_y
+      - blue   : in_x only
+      - yellow : in_y only
+      - green  : both in_x and in_y
+    """
+    if df is None or len(df) == 0:
+        fig, ax = plt.subplots(figsize=figsize)
+        ax.set_title(title or "No segments to plot")
+        if save_path:
+            Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+            plt.savefig(save_path, bbox_inches="tight", dpi=150)
+            plt.close(fig)
+        elif show:
+            plt.show()
+        return fig, ax
+
+    required = ['x1', 'x2', 'y1', 'y2']
+    for c in required:
+        if c not in df.columns:
+            raise ValueError(f"DataFrame must contain column '{c}'")
+
+    df_plot = df.dropna(subset=required).copy()
+
+    # Normalize flags to booleans if present
+    def to_bool_col(df_local, col):
+        if col not in df_local.columns:
+            return pd.Series([False] * len(df_local), index=df_local.index)
+        return df_local[col].astype(bool)
+
+    in_x = to_bool_col(df_plot, 'in_x')
+    in_y = to_bool_col(df_plot, 'in_y')
+
+    both_mask = in_x & in_y
+    only_x_mask = in_x & ~in_y
+    only_y_mask = in_y & ~in_x
+    none_mask = ~in_x & ~in_y
+
+    # extents for plotting limits (safe)
+    x_vals = df_plot[['x1', 'x2']].values
+    y_vals = df_plot[['y1', 'y2']].values
+    x_min = int(np.nanmin(x_vals))
+    x_max = int(np.nanmax(x_vals))
+    y_min = int(np.nanmin(y_vals))
+    y_max = int(np.nanmax(y_vals))
+
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+    # plot order: none (red) → only_x (blue) → only_y (yellow) → both (green)
+    color_specs = [
+        (none_mask,  'red',    'none (neither)'),
+        (only_x_mask,'blue',   'only x'),
+        (only_y_mask,'yellow', 'only y'),
+        (both_mask,  'green',  'both x & y'),
+    ]
+
+    for mask, color, label in color_specs:
+        df_subset = df_plot[mask]
+        for _, row in df_subset.iterrows():
+            ax.plot([row['x1'], row['x2']], [row['y1'], row['y2']],
+                    linewidth=linewidth, color=color, alpha=alpha)
+    # Build legend (one handle per category)
+    from matplotlib.lines import Line2D
+    legend_elems = [Line2D([0], [0], color=c, lw=3, label=l) for (_, c, l) in color_specs]
+    ax.legend(handles=legend_elems, loc='best')
+
+    ax.set_title(title or '')
+    ax.set_aspect('equal', 'box')
+    xpad = max(1, (x_max - x_min) * 0.02)
+    ypad = max(1, (y_max - y_min) * 0.02)
+    ax.set_xlim(x_min - xpad, x_max + xpad)
+    ax.set_ylim(y_max + ypad, y_min - ypad)  # invert y by swapping if needed
+
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+    plt.tight_layout()
+
+    if save_path:
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(save_path, bbox_inches="tight", dpi=150)
+        plt.close(fig)
+    else:
+        if show:
+            plt.show()
+
+    return fig, ax
