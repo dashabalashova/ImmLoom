@@ -7,7 +7,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--input-path", required=True)
     p.add_argument("--input-file", required=True)
-    p.add_argument("--out-dir", default="./immloom_out")
+    p.add_argument("--out-dir", default="./outputs/self")
     p.add_argument("--init-segm-length-min", default=10000)
     p.add_argument("--pi-min", default=80.0)
     p.add_argument("--segm-length-min", default=2000)

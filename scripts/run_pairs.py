@@ -146,27 +146,57 @@ def build_graph_and_save(
     print(f"Saved nodes -> {nodes_path}")
     print(nodes_df.head().to_string())
 
-
 def parse_args():
-    p = argparse.ArgumentParser(description="Create graph TSVs from immloom segmentation/block outputs")
-    p.add_argument('--n1', type=int, default=0, help='index of left sample (default: 0)')
-    p.add_argument('--n2', type=int, default=1, help='index of right sample (default: 1)')
-    p.add_argument('--data-dir', type=Path, default=Path('data/processed/dataset_01/patchwork_output/IGH/pairwise_alignments'), help='directory with pairwise alignment TSV files')
-    p.add_argument('--immloom-out', type=Path, default=Path('immloom_out'), help='directory with immloom outputs (self_*/block.tsv)')
-    p.add_argument('--out-dir', type=Path, default=Path('immloom_out/graphs'), help='output directory for graph TSVs')
-    p.add_argument('--pi', type=float, default=80.0, help='percent identity threshold passed to segm_filter')
-    p.add_argument('--min-length', type=int, default=2000, help='minimum segment length to keep')
-    return p.parse_args()
+    p = argparse.ArgumentParser(
+        description="Create graph TSVs from immloom segmentation/block outputs"
+    )
 
+    # indices
+    p.add_argument('--n1', type=int, default=0, help='index of left sample')
+    p.add_argument('--n2', type=int, default=1, help='index of right sample')
+
+    # dataset-level params
+    p.add_argument('--dataset', type=str, default='dataset_01', help='dataset name')
+    p.add_argument('--locus', type=str, default='IGH', help='locus (IGH, IGK, IGL, ...)')
+
+    # optional explicit paths (override auto paths)
+    p.add_argument('--data-dir', type=Path, default=None,
+                   help='directory with pairwise alignment TSV files')
+    p.add_argument('--immloom-out', type=Path, default=None,
+                   help='directory with immloom outputs (self_*/block.tsv)')
+    p.add_argument('--out-dir', type=Path, default=None,
+                   help='output directory for graph TSVs')
+
+    # filtering params
+    p.add_argument('--pi', type=float, default=80.0,
+                   help='percent identity threshold')
+    p.add_argument('--min-length', type=int, default=2000,
+                   help='minimum segment length to keep')
+
+    return p.parse_args()
 
 if __name__ == '__main__':
     args = parse_args()
+
+    # auto paths if not explicitly provided
+    data_dir = args.data_dir or Path(
+        f"data/processed/{args.dataset}/patchwork_output/{args.locus}/pairwise_alignments"
+    )
+
+    immloom_out = args.immloom_out or Path(
+        f"outputs/{args.dataset}/{args.locus}/self"
+    )
+
+    out_dir = args.out_dir or Path(
+        f"outputs/{args.dataset}/{args.locus}/graphs"
+    )
+
     build_graph_and_save(
         n1=args.n1,
         n2=args.n2,
-        data_dir=args.data_dir,
-        immloom_out=args.immloom_out,
-        out_dir=args.out_dir,
+        data_dir=data_dir,
+        immloom_out=immloom_out,
+        out_dir=out_dir,
         pi=args.pi,
         min_length=args.min_length,
     )

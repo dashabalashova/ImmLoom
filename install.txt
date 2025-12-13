@@ -1,0 +1,12 @@
+# clustal-omega
+# http://www.clustal.org/omega/clustal-omega-1.2.4.tar.gz
+
+tar -xvzf clustal-omega-1.2.4.tar.gz
+cd clustal-omega-1.2.4
+./configure --with-pic --with-openmp
+make && sudo make install
+
+dashabalashova@MacBook-Pro-2 ImmLoom % which clustalo
+/usr/local/bin/clustalo
+dashabalashova@MacBook-Pro-2 ImmLoom % clustalo --version
+1.2.4
