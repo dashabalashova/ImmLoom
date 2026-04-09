@@ -10,13 +10,14 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import networkx as nx
 import pandas as pd
+from networkx.algorithms import community
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Build a multi-sample block graph from pairwise TSV tables, save connected "
-            "components, and export graph visualizations."
+            "components, refine oversized components by community detection, and export graph visualizations."
         )
     )
     parser.add_argument("--dataset", required=True, help="Dataset name, e.g. dataset_01_subset")
@@ -42,6 +43,15 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=42,
         help="Seed for spring layout used in component plots (default: 42)",
+    )
+    parser.add_argument(
+        "--max-nodes-per-group",
+        type=float,
+        default=3.0,
+        help=(
+            "If len(component) / number_of_unique_groups is greater than this threshold, "
+            "the component is refined with greedy modularity communities (default: 3.0)"
+        ),
     )
     return parser.parse_args()
 
@@ -94,9 +104,60 @@ def build_block_graph(pair_dir: Path, use_multi: bool = False) -> tuple[nx.Graph
     return graph, files
 
 
-def connected_components_df(graph: nx.Graph) -> pd.DataFrame:
+def should_refine_component(
+    graph: nx.Graph,
+    component: set[tuple[str, int]],
+    max_nodes_per_group: float,
+) -> bool:
+    unique_groups = {graph.nodes[node]["group"] for node in component}
+    if not unique_groups:
+        return False
+    ratio = len(component) / len(unique_groups)
+    return ratio > max_nodes_per_group
+
+
+def refine_components(
+    graph: nx.Graph,
+    max_nodes_per_group: float,
+) -> list[set[tuple[str, int]]]:
+    """
+    Start from connected components.
+    If a component has too many nodes per unique group, split it using
+    greedy modularity community detection.
+    """
+    refined_components: list[set[tuple[str, int]]] = []
+
+    for component in nx.connected_components(graph):
+        component = set(component)
+
+        if not should_refine_component(graph, component, max_nodes_per_group):
+            refined_components.append(component)
+            continue
+
+        subgraph = graph.subgraph(component).copy()
+
+        # Convert to simple Graph for community detection.
+        simple_subgraph = nx.Graph()
+        simple_subgraph.add_nodes_from(subgraph.nodes(data=True))
+        simple_subgraph.add_edges_from(subgraph.edges())
+
+        communities = list(community.greedy_modularity_communities(simple_subgraph))
+
+        if len(communities) <= 1:
+            refined_components.append(component)
+            continue
+
+        refined_components.extend(set(c) for c in communities)
+
+    refined_components = sorted(refined_components, key=len, reverse=True)
+    return refined_components
+
+
+def components_df_from_list(
+    graph: nx.Graph,
+    components: list[set[tuple[str, int]]],
+) -> pd.DataFrame:
     rows: list[dict[str, int | str]] = []
-    components = list(nx.connected_components(graph))
 
     for component_id, component in enumerate(components, start=1):
         for node in component:
@@ -164,17 +225,21 @@ def build_group_colormap(groups: Iterable[str]) -> dict[str, tuple[float, float,
 
 def save_component_plots(
     graph: nx.Graph,
-    components_df: pd.DataFrame,
+    components: list[set[tuple[str, int]]],
     out_dir: Path,
     min_component_size: int = 2,
     layout_seed: int = 42,
 ) -> None:
-    if graph.number_of_nodes() == 0 or components_df.empty:
+    if graph.number_of_nodes() == 0 or not components:
         return
 
-    group_to_color = build_group_colormap(components_df["group"].unique())
-    components = list(nx.connected_components(graph))
     components = [component for component in components if len(component) >= min_component_size]
+    if not components:
+        return
+
+    all_groups = [graph.nodes[node]["group"] for component in components for node in component]
+    group_to_color = build_group_colormap(all_groups)
+
     components = sorted(components, key=len, reverse=True)
 
     for i, component in enumerate(components, start=1):
@@ -185,7 +250,10 @@ def save_component_plots(
             group_to_color.get(graph.nodes[node]["group"], (0.8, 0.8, 0.8, 1.0))
             for node in subgraph.nodes
         ]
-        labels = {node: f"{graph.nodes[node]['group']}\n{graph.nodes[node]['block_id']}" for node in subgraph.nodes}
+        labels = {
+            node: f"{graph.nodes[node]['group']}\n{graph.nodes[node]['block_id']}"
+            for node in subgraph.nodes
+        }
 
         fig, ax = plt.subplots(figsize=(7, 7))
         nx.draw(
@@ -235,22 +303,32 @@ def main() -> None:
         print("Graph is empty. Nothing to save.")
         return
 
-    components_df = connected_components_df(graph)
+    original_components = list(nx.connected_components(graph))
+    original_component_sizes = sorted((len(c) for c in original_components), reverse=True)
+
+    refined_components = refine_components(
+        graph,
+        max_nodes_per_group=args.max_nodes_per_group,
+    )
+    refined_component_sizes = sorted((len(c) for c in refined_components), reverse=True)
+
+    components_df = components_df_from_list(graph, refined_components)
     components_path = out_tables / "components.tsv"
     components_df.to_csv(components_path, index=False, sep="\t")
 
     save_global_plot(graph, out_graphs / "blocks_grouped_by_sample.png")
     save_component_plots(
         graph,
-        components_df,
+        refined_components,
         out_graphs,
         min_component_size=args.min_component_size,
         layout_seed=args.layout_seed,
     )
 
-    component_sizes = sorted((len(c) for c in nx.connected_components(graph)), reverse=True)
-    print(f"Connected components: {len(component_sizes)}")
-    print(f"Largest component sizes: {component_sizes[:10]}")
+    print(f"Original connected components: {len(original_components)}")
+    print(f"Largest original component sizes: {original_component_sizes[:10]}")
+    print(f"Refined components: {len(refined_components)}")
+    print(f"Largest refined component sizes: {refined_component_sizes[:10]}")
     print(f"Saved table: {components_path}")
     print(f"Saved graphs to: {out_graphs}")
 
