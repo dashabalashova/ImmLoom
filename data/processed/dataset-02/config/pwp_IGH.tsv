@@ -1,0 +1,9 @@
+SampleID	Label	Fasta
+s01-h1	s01-h1	data/processed/dataset-02/fasta/mixed/s01-h1-IGH.fasta
+s01-h2	s01-h2	data/processed/dataset-02/fasta/mixed/s01-h2-IGH.fasta
+s02-h1	s02-h1	data/processed/dataset-02/fasta/mixed/s02-h1-IGH.fasta
+s02-h2	s02-h2	data/processed/dataset-02/fasta/mixed/s02-h2-IGH.fasta
+s03-h1	s03-h1	data/processed/dataset-02/fasta/mixed/s03-h1-IGH.fasta
+s03-h2	s03-h2	data/processed/dataset-02/fasta/mixed/s03-h2-IGH.fasta
+s04-h1	s04-h1	data/processed/dataset-02/fasta/mixed/s04-h1-IGH.fasta
+s04-h2	s04-h2	data/processed/dataset-02/fasta/mixed/s04-h2-IGH.fasta

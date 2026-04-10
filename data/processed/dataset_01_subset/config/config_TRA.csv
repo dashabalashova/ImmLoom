@@ -1,9 +1,0 @@
-SampleID,Label,Fasta
-s01_h1,s01_h1,/Users/dashabalashova/projects/ImmLoom/ImmLoom/data/processed/dataset_01_subset/fasta/s01_h1_TRA.fasta
-s01_h2,s01_h2,/Users/dashabalashova/projects/ImmLoom/ImmLoom/data/processed/dataset_01_subset/fasta/s01_h2_TRA.fasta
-s02_h1,s02_h1,/Users/dashabalashova/projects/ImmLoom/ImmLoom/data/processed/dataset_01_subset/fasta/s02_h1_TRA.fasta
-s02_h2,s02_h2,/Users/dashabalashova/projects/ImmLoom/ImmLoom/data/processed/dataset_01_subset/fasta/s02_h2_TRA.fasta
-s03_h1,s03_h1,/Users/dashabalashova/projects/ImmLoom/ImmLoom/data/processed/dataset_01_subset/fasta/s03_h1_TRA.fasta
-s03_h2,s03_h2,/Users/dashabalashova/projects/ImmLoom/ImmLoom/data/processed/dataset_01_subset/fasta/s03_h2_TRA.fasta
-s04_h1,s04_h1,/Users/dashabalashova/projects/ImmLoom/ImmLoom/data/processed/dataset_01_subset/fasta/s04_h1_TRA.fasta
-s04_h2,s04_h2,/Users/dashabalashova/projects/ImmLoom/ImmLoom/data/processed/dataset_01_subset/fasta/s04_h2_TRA.fasta
