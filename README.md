@@ -17,10 +17,10 @@ Pipeline steps:
 3. Run patchworkplot  
 4. Fix sequence orientation  
 5. Build and connect blocks  
-6. Build components (graphs)  
+6. Build graph components
 7. Export FASTA  
 8. Run Clustal Omega  
-9. Build MSA graphs  
+9. Build MSA figures  
 
 ## Outputs
 
@@ -29,9 +29,3 @@ Main results are in:
 ```text
 results/dataset-02/IGH/
 ```
-
-Includes:
-
-- pwp/ — pairwise alignments  
-- blocks/ — block tables + graphs  
-- components/ — grouped blocks, fasta, msa, graphs  
