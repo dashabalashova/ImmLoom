@@ -1,6 +1,6 @@
 # ImmLoom
 
-Pipeline for IG locus analysis using patchworkplot + graphs + MSA.
+Pipeline for Immunological Loci Analysis
 
 ## Run everything
 
