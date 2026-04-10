@@ -18,6 +18,11 @@ def parse_args() -> argparse.Namespace:
         default="data/processed",
         help="Root directory containing processed datasets",
     )
+    parser.add_argument(
+        "--output-root",
+        default="results",
+        help="Root directory for outputs",
+    )
     return parser.parse_args()
 
 
@@ -58,10 +63,11 @@ def main() -> None:
     dataset = args.dataset
     locus = args.locus
     data_root = Path(args.data_root)
+    output_root = Path(args.output_root)
 
     fasta_dir = data_root / dataset / "fasta" / "mixed_forward"
-    blocks_dir = data_root / dataset / locus / "blocks" / "tables"
-    components_path = data_root / dataset / locus / "components" / "tables" / "components.tsv"
+    blocks_dir = output_root / dataset / locus / "blocks" / "tables"
+    components_path = output_root / dataset / locus / "components" / "tables" / "components.tsv"
     out_dir = data_root / dataset / locus / "components" / "fasta"
 
     if not fasta_dir.exists():

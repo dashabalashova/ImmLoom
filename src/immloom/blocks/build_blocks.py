@@ -261,9 +261,9 @@ def process_file(file_path: Path, output_root: Path) -> None:
     segm_diag_non_singletons["d2"] = np.floor(segm_diag_non_singletons["d2"]).astype(int)
 
     tables_dir = output_root / "tables"
-    graphs_dir = output_root / "graphs"
+    figures_dir = output_root / "figures"
     tables_dir.mkdir(parents=True, exist_ok=True)
-    graphs_dir.mkdir(parents=True, exist_ok=True)
+    figures_dir.mkdir(parents=True, exist_ok=True)
 
     fig, ax = plt.subplots(figsize=(8, 8))
     plot_necklace_diagonal_strand(
@@ -272,7 +272,7 @@ def process_file(file_path: Path, output_root: Path) -> None:
         title=f"Blocks from self alignments\n{sample_name}",
     )
     plt.tight_layout()
-    fig.savefig(graphs_dir / f"blocks_{sample_name}.png", dpi=300, bbox_inches="tight")
+    fig.savefig(figures_dir / f"blocks_{sample_name}.png", dpi=300, bbox_inches="tight")
     plt.close(fig)
 
     segm_diag_non_singletons[["d1", "d2", "block_id", "forward"]].to_csv(
@@ -293,6 +293,11 @@ def parse_args() -> argparse.Namespace:
         default="data/processed",
         help="Root directory containing processed datasets",
     )
+    parser.add_argument(
+        "--output-root",
+        default="results",
+        help="Root directory for output results",
+    )
     return parser.parse_args()
 
 
@@ -306,7 +311,7 @@ def main() -> None:
         / "pwp"
         / "pairwise_alignments_forward"
     )
-    output_root = Path(args.data_root) / args.dataset / args.locus / "blocks"
+    output_root = Path(args.output_root) / args.dataset / args.locus / "blocks"
 
     if not alignments_dir.exists():
         raise FileNotFoundError(f"Input directory not found: {alignments_dir}")

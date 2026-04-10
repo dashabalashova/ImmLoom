@@ -70,6 +70,6 @@ echo "==> Run Clustal Omega"
 python -m immloom.components.run_clustalo --dataset "${DATASET}" --locus "${LOCUS}"
 
 echo "==> Build MSA graphs"
-python -m immloom.components.build_msa_graphs --dataset "${DATASET}" --locus "${LOCUS}"
+python -m immloom.components.build_msa_figures --dataset "${DATASET}" --locus "${LOCUS}"
 
 echo "==> Done"

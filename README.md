@@ -27,7 +27,7 @@ Pipeline steps:
 Main results are in:
 
 ```text
-data/processed/dataset-02/IGH/
+results/dataset-02/IGH/
 ```
 
 Includes:

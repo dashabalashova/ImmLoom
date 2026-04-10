@@ -35,6 +35,11 @@ def parse_args() -> argparse.Namespace:
         default="data/processed",
         help="Root directory containing processed datasets",
     )
+    parser.add_argument(
+        "--output-root",
+        default="results",
+        help="Root directory for output results",
+    )
     return parser.parse_args()
 
 
@@ -76,11 +81,11 @@ def extract_sample_names(file_name: str) -> tuple[str, str]:
     return name_x, name_y
 
 
-def process_one_file(file_path: Path, dataset: str, locus: str, data_root: str) -> None:
+def process_one_file(file_path: Path, dataset: str, locus: str, data_root: str, output_root: str) -> None:
     name_x, name_y = extract_sample_names(file_path.name)
 
     dfx_path = (
-        Path(data_root)
+        Path(output_root)
         / dataset
         / locus
         / "blocks"
@@ -88,7 +93,7 @@ def process_one_file(file_path: Path, dataset: str, locus: str, data_root: str) 
         / f"blocks_{name_x}.tsv"
     )
     dfy_path = (
-        Path(data_root)
+        Path(output_root)
         / dataset
         / locus
         / "blocks"
@@ -96,7 +101,7 @@ def process_one_file(file_path: Path, dataset: str, locus: str, data_root: str) 
         / f"blocks_{name_y}.tsv"
     )
 
-    out_dir = Path(data_root) / dataset / locus / "block_pairs" / "tables"
+    out_dir = Path(output_root) / dataset / locus / "block_pairs" / "tables"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / f"{file_path.stem}.tsv"
 
@@ -170,7 +175,7 @@ def main() -> None:
 
     for file_path in tqdm(files, desc="Processing pairwise alignments"):
         try:
-            process_one_file(file_path, args.dataset, args.locus, args.data_root)
+            process_one_file(file_path, args.dataset, args.locus, args.data_root, args.output_root)
         except Exception as e:
             print(f"[ERROR] Failed for {file_path.name}: {e}")
 

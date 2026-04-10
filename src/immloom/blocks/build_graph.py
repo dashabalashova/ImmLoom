@@ -24,9 +24,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dataset", required=True, help="Dataset name, e.g. dataset-02")
     parser.add_argument("--locus", required=True, help="Locus name, e.g. IGH")
     parser.add_argument(
-        "--data-root",
-        default="data/processed",
-        help="Root directory containing processed datasets",
+        "--output-root",
+        default="results",
+        help="Root directory for output results",
     )
     parser.add_argument(
         "--use-multigraph",
@@ -57,15 +57,15 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def build_paths(dataset: str, locus: str, data_root: str) -> dict[str, Path]:
-    root = Path(data_root) / dataset / locus
+def build_paths(dataset: str, locus: str, output_root: str) -> dict[str, Path]:
+    root = Path(output_root) / dataset / locus
     pair_dir = root / "block_pairs" / "tables"
     out_tables = root / "components" / "tables"
-    out_graphs = root / "components" / "graphs"
+    out_figures = root / "components" / "figures"
     return {
         "pair_dir": pair_dir,
         "out_tables": out_tables,
-        "out_graphs": out_graphs,
+        "out_figures": out_figures,
     }
 
 
@@ -276,6 +276,8 @@ def save_component_plots(
 
     components = sorted(components, key=len, reverse=True)
 
+    max_id = len(components)
+    width = len(str(max_id))
     for i, component in enumerate(components, start=1):
         subgraph = graph.subgraph(component)
         pos = nx.spring_layout(subgraph, seed=layout_seed)
@@ -308,23 +310,23 @@ def save_component_plots(
         ax.axis("off")
 
         fig.tight_layout()
-        fig.savefig(out_dir / f"component_{i:03d}.png", dpi=300, bbox_inches="tight")
+        fig.savefig(out_dir / f"component_{i:0{width}d}.png", dpi=300, bbox_inches="tight")
         plt.close(fig)
 
 
 def main() -> None:
     args = parse_args()
-    paths = build_paths(args.dataset, args.locus, args.data_root)
+    paths = build_paths(args.dataset, args.locus, args.output_root)
 
     pair_dir = paths["pair_dir"]
     out_tables = paths["out_tables"]
-    out_graphs = paths["out_graphs"]
+    out_figures = paths["out_figures"]
 
     if not pair_dir.exists():
         raise FileNotFoundError(f"Pair tables directory does not exist: {pair_dir}")
 
     out_tables.mkdir(parents=True, exist_ok=True)
-    out_graphs.mkdir(parents=True, exist_ok=True)
+    out_figures.mkdir(parents=True, exist_ok=True)
 
     graph, files = build_block_graph(pair_dir, use_multi=args.use_multigraph)
 
@@ -350,11 +352,11 @@ def main() -> None:
     components_path = out_tables / "components.tsv"
     components_df.to_csv(components_path, index=False, sep="\t")
 
-    save_global_plot(graph, out_graphs / "blocks_grouped_by_sample.png")
+    save_global_plot(graph, out_figures / "blocks_grouped_by_sample.png")
     save_component_plots(
         graph,
         refined_components,
-        out_graphs,
+        out_figures,
         min_component_size=args.min_component_size,
         layout_seed=args.layout_seed,
     )
@@ -364,7 +366,7 @@ def main() -> None:
     print(f"Refined components: {len(refined_components)}")
     print(f"Largest refined component sizes: {refined_component_sizes[:10]}")
     print(f"Saved table: {components_path}")
-    print(f"Saved graphs to: {out_graphs}")
+    print(f"Saved figures to: {out_figures}")
 
 
 if __name__ == "__main__":

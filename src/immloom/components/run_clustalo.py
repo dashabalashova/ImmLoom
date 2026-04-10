@@ -47,7 +47,8 @@ def main() -> None:
         Path(args.data_root)
         / args.dataset
         / args.locus
-        / "components_msa"
+        / "components"
+        / "msa"
     )
 
     if not input_dir.exists():
